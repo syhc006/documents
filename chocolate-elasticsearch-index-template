@@ -1,0 +1,63 @@
+PUT /_template/chocolate-elasticsearch-index-template
+{
+  "index_patterns": ["chocolate*"],
+  "settings": {
+    "number_of_shards": 1,
+    "index.number_of_replicas": 0
+  },
+  "mappings": {
+    "doc": {
+      "_source": {
+        "enabled": true
+      },
+      "date_detection": true,
+      "numeric_detection": false,
+      "dynamic_templates": [
+        {
+          "keyword": { 
+            "match_mapping_type": "string",
+            "match": "*_kw",
+            "mapping": {
+              "type": "keyword"
+            } 
+          }
+        },
+        {
+          "geo": {
+            "match_mapping_type": "string",
+            "match": "*_geo",
+            "mapping":{
+              "type": "geo_point"
+            }
+          }
+        },
+        {
+          "ip": {
+            "match_mapping_type": "string",
+            "match": "*_ip",
+            "mapping":{
+              "type": "ip"
+            }
+          }
+        },
+        {
+          "string": { 
+            "match_mapping_type": "string",
+            "match_pattern": "regex",
+            "match": "[^geo|kw|ip]$",
+            "mapping": {
+              "type": "text",
+              "fields": {
+                "keyword": {
+                  "type":  "keyword",
+                  "ignore_above": 256
+                }
+              },
+              "analyzer": "ik_smart"
+            } 
+          }
+        }        
+      ]
+    }
+  }
+}

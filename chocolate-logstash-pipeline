@@ -1,0 +1,40 @@
+input{
+  udp{
+    host=>"0.0.0.0"
+    port=>5140
+    codec=>json{charset => "UTF-8"}
+    type=>"test"
+  }
+}
+
+filter{
+  date{
+    match => [ "event_time", "UNIX","UNIX_MS", "ISO8601" ]
+    timezone => "Asia/Shanghai"
+    remove_field => "event_time"
+  }
+  geoip{
+    database => "chocolate.mmdb"
+    default_database_type => "City"
+    fields => ["latitude","longitude","region_code"]
+    source => ["src_ip"]
+    target => "src_location"
+    add_field => {
+      "org"=>"%{src_location[region_code]}"
+      "src_geo"=>"%{src_location[latitude]},%{src_location[longitude]}"
+    }
+    remove_field => "src_location"
+  }
+  mutate{
+    remove_field => ["host"]
+  }
+}
+
+output{
+  elasticsearch{
+    hosts => ["http://127.0.0.1:9200"]
+    index => "chocolate-test-%{+YYYY.MM}"
+    password => "123123"
+    user => "elastic"
+  }
+}
